@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T26 Trip Plan — drop a plan on another day</title>
+<link rel="stylesheet" href="_shared/nocturne.css">
+<link rel="stylesheet" href="../style.css">
+<style>
+  /* the component from ../, dressed in Nocturne type; no background grid on the app screen */
+  #stage{background:var(--page);--font:var(--f-text)}
+  #stage .tp{position:absolute;left:40px;top:50px;zoom:1;z-index:1}
+  body.autoplay #stage :focus-visible{outline:none}
+  body.autoplay #li-cursor{transition:none}   /* visible from frame one, no fade at the loop seam */
+</style>
+</head>
+<body>
+<div id="stage" data-title="T26 Trip Plan" data-url="veraetogrex-portfolio.github.io/trip-plan">
+  <section class="tp" id="trip" aria-label="Trip plan by day">
+    <p class="tp-trip"><b>Lisbon weekend</b><span><i>VECTOR</i> Trips</span></p>
+
+    <!-- the days: switch the view, or drop a plan on one to move it there -->
+    <div class="tp-days" role="radiogroup" aria-label="Day"></div>
+
+    <div class="tp-titles" aria-hidden="true"></div>
+    <div class="tp-done" role="status"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="tp-done-t">Moved</span><button class="tp-undo" tabindex="-1">Undo</button></div>
+
+    <div class="tp-hours" aria-hidden="true"></div>
+    <!-- every day's plans, side by side; only the open day shows through -->
+    <div class="tp-lane" role="list" aria-label="Plans"></div>
+    <!-- a plan that is being carried lives here, above the lane -->
+    <div class="tp-air"></div>
+  </section>
+</div>
+<script>window.AUTOPLAY = true;</script>
+<script src="_shared/stage.js"></script>
+<script src="../script.js"></script>
+<script>
+const tp = document.querySelector('#trip').trip;
+const grip = () => { const r = Stage.rect(tp.plan(2)); return [r.x + 640, r.y + 78]; };   // on the ticket's teal body
+Stage.init({
+  reset: () => tp.reset(),
+  get cursorStart() { return grip(); },                 // already on the ticket in frame one
+  async demo(s) {
+    const t0 = performance.now();
+    s.cursor.grab(true); await s.down();                // frame one: take the ticket; it lifts on the first move
+    const sun = s.rect(tp.day(1));
+    await s.move([sun.cx + 30, sun.cy - 8], 820, { arc: .08 });   // up onto Sunday: it hangs under the chip, "11:00 free"
+    await s.until(t0, 1300);
+    await s.up(); s.cursor.grab(false);                // drop: Sunday slides in under it, the free window shows, it drops in
+    await s.wait(700);
+    await s.move([1362, 330], 500);                    // out of the way, in the margin, while it lands and reads
+    await s.until(t0, 5000);
+    await s.click(tp.undo, { ms: 360, hold: 100 });     // Undo, one motion: back to Saturday 14:00
+    await s.wait(200);
+    await s.move(grip(), 760);                          // back on the ticket as it lands: the loop closes on frame one
+    await s.until(t0, 6800);
+  },
+});
+</script>
+</body>
+</html>

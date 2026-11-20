@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trip Plan — veraetogrex_portfolio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Trip Plan · zero dependencies · github.com/veraetogrex-portfolio -->
+  <section class="tp" id="trip" aria-label="Trip plan by day">
+    <p class="tp-trip"><b>Lisbon weekend</b><span><i>VECTOR</i> Trips</span></p>
+
+    <!-- the days: switch the view, or drop a plan on one to move it there -->
+    <div class="tp-days" role="radiogroup" aria-label="Day"></div>
+
+    <div class="tp-titles" aria-hidden="true"></div>
+    <div class="tp-done" role="status"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="tp-done-t">Moved</span><button class="tp-undo" tabindex="-1">Undo</button></div>
+
+    <div class="tp-hours" aria-hidden="true"></div>
+    <!-- every day's plans, side by side; only the open day shows through -->
+    <div class="tp-lane" role="list" aria-label="Plans"></div>
+    <!-- a plan that is being carried lives here, above the lane -->
+    <div class="tp-air"></div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

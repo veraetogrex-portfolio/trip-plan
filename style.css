@@ -1,0 +1,106 @@
+/* Trip Plan — github.com/veraetogrex-portfolio · zero dependencies
+   One day of a trip hour by hour, day chips on top; a booked entry is a ticket with a stub.
+   Plans move only with transform; the lane and the day titles are clipped windows that the days slide under. */
+:root {
+  --page: #07080c; --panel: #0e1016; --strip: #161b20;
+  --text: #f1f4f5; --text-2: #b2bcbf; --text-3: #8b969a;
+  --line: rgba(255, 255, 255, .08);
+  --plan: #1a2226;             /* an ordinary plan: graphite with a cold tint */
+  --plan-ico: #243035;
+  --ticket: #1d6f6c;           /* a booked ticket — the one thing on the day in colour; white on it 5.9:1 */
+  --ticket-deep: #175a58;      /* the day you are looking at */
+  --on-ticket-2: rgba(236, 252, 250, .88);
+  --sea: #7fd8cf;              /* cold sea-glass teal for text on dark: free slot, Undo, check */
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; overflow: hidden; background: var(--page); color: var(--text); font: 16px/1.3 var(--font); }
+p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+button:focus-visible { outline: 3px solid var(--sea); outline-offset: 3px; }
+
+.tp { position: relative; width: 1360px; height: 800px; border-radius: 36px; overflow: hidden; user-select: none; touch-action: none;
+  background: var(--panel); box-shadow: 0 0 0 1px var(--line) inset, 0 1px 0 rgba(255, 255, 255, .06) inset, 0 80px 140px -50px rgba(0, 0, 0, .8); }
+@media (max-width: 1400px) { .tp { zoom: .8; } }
+@media (max-width: 1100px) { .tp { zoom: .6; } }
+@media (max-width: 820px)  { .tp { zoom: .4; } }
+@media (max-width: 560px)  { .tp { zoom: .27; } }
+
+/* ── header: the trip on the left, the days on the right ── */
+.tp-trip { position: absolute; left: 72px; top: 48px; display: flex; align-items: baseline; gap: 12px; white-space: nowrap; }
+.tp-trip b { font: 700 26px/1.1 var(--font); letter-spacing: -.01em; }
+.tp-trip span { font: 600 22px var(--font); color: var(--text-3); }
+.tp-trip span i { font-style: normal; font-weight: 800; letter-spacing: .04em; color: var(--text-2); }
+
+.tp-days { position: absolute; z-index: 30; right: 72px; top: 44px; display: flex; gap: 8px; padding: 6px; border-radius: 24px; background: var(--strip);
+  box-shadow: 0 0 0 1px var(--line) inset; }
+.tp-day { position: relative; z-index: 1; width: 260px; height: 110px; padding: 0 26px; border-radius: 18px; display: flex; flex-direction: column; justify-content: center;
+  transition: transform .15s ease-out, background-color .15s ease-out; }
+.tp-day b { font: 700 34px/1.05 var(--font); letter-spacing: -.01em; color: var(--text-2); transition: color .2s; white-space: nowrap; }
+.tp-day span { margin-top: 6px; font: 600 26px/1.1 var(--font); color: var(--text-3); white-space: nowrap; transition: color .2s; }
+.tp-day[aria-checked="true"] b { color: #fff; }
+.tp-day[aria-checked="true"] span { color: var(--on-ticket-2); }
+.tp-day.is-target { transform: scale(1.04); background: #222b30; box-shadow: 0 0 0 2px var(--sea) inset; }
+.tp-day.is-target span { color: var(--sea); font-weight: 700; }
+.tp-day.is-full { box-shadow: 0 0 0 2px rgba(255, 255, 255, .14) inset; }
+.tp-day-pill { position: absolute; left: 6px; top: 6px; width: 260px; height: 110px; border-radius: 18px; background: var(--ticket-deep);
+  transition: transform .42s cubic-bezier(.16, 1, .3, 1); }
+
+/* ── the day title slides with its day ── */
+.tp-titles { position: absolute; inset: 0; pointer-events: none; clip-path: inset(84px 900px 644px 72px); }
+.tp-title { position: absolute; left: 0; top: 0; white-space: nowrap; font: 700 52px/1 var(--font); letter-spacing: -.025em; will-change: transform; }
+.tp-title span { margin-left: 16px; font: 600 30px var(--font); letter-spacing: -.01em; color: var(--text-3); }
+
+.tp-done { position: absolute; z-index: 5; right: 72px; top: 178px; height: 54px; display: flex; align-items: center; gap: 14px; padding: 0 10px 0 20px; border-radius: 18px;
+  background: var(--strip); box-shadow: 0 0 0 1px var(--line) inset; font: 600 26px var(--font); white-space: nowrap;
+  opacity: 0; transform: translateY(-8px); pointer-events: none; transition: opacity .2s ease-out, transform .3s cubic-bezier(.16, 1, .3, 1); }
+.tp-done svg { width: 28px; height: 28px; fill: none; stroke: var(--sea); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.tp-undo { height: 42px; padding: 0 16px; border-radius: 12px; font: 700 26px var(--font); color: var(--sea); transition: background-color .15s; }
+.tp-undo:hover, .tp-undo.li-hover { background: #222b30; }
+.tp.has-done .tp-done { opacity: 1; transform: none; pointer-events: auto; }
+
+/* ── the hours: labels only, no grid ── */
+.tp-hours { position: absolute; left: 72px; top: 0; width: 80px; pointer-events: none; }
+.tp-hours p { position: absolute; right: 0; font: 500 24px/1 var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* the lane: every day's plans sit side by side and slide under this window */
+.tp-lane { position: absolute; inset: 0; pointer-events: none; clip-path: inset(240px 72px 0 172px); }
+.tp-air { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
+
+.tp-plan { position: absolute; left: 0; top: 0; width: 1116px; display: flex; align-items: center; gap: 20px; padding: 0 30px 0 22px; border-radius: 20px;
+  background: var(--plan); box-shadow: 0 0 0 1px var(--line) inset; pointer-events: auto; cursor: grab; transform-origin: 0 0; will-change: transform; touch-action: none; }
+.tp-ico { flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--plan-ico); color: var(--text-2); }
+.tp-ico svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tp-what { flex: 1; min-width: 0; }
+.tp-name { font: 600 28px/1.15 var(--font); letter-spacing: -.01em; white-space: nowrap; }
+.tp-place { margin-top: 4px; font: 500 22px/1.15 var(--font); color: var(--text-3); white-space: nowrap; }
+.tp-when { flex: none; font: 600 24px var(--font); color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tp-plan.is-short .tp-place { display: none; }
+.tp-plan.is-short .tp-ico { width: 40px; height: 40px; border-radius: 12px; }
+.tp-plan.is-short .tp-ico svg { width: 24px; height: 24px; }
+
+/* the booked ticket: big, in colour, with a stub that says when */
+.tp-plan.is-ticket { background: var(--ticket); box-shadow: 0 1px 0 rgba(255, 255, 255, .14) inset; padding: 0 0 0 26px; gap: 24px;
+  -webkit-mask: radial-gradient(circle 13px at calc(100% - 236px) 0, #0000 98%, #000) top / 100% 51% no-repeat, radial-gradient(circle 13px at calc(100% - 236px) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+          mask: radial-gradient(circle 13px at calc(100% - 236px) 0, #0000 98%, #000) top / 100% 51% no-repeat, radial-gradient(circle 13px at calc(100% - 236px) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat; }
+.tp-plan.is-ticket .tp-ico { width: 76px; height: 76px; border-radius: 22px; background: rgba(255, 255, 255, .14); color: #fff; }
+.tp-plan.is-ticket .tp-ico svg { width: 44px; height: 44px; stroke-width: 1.8; }
+.tp-plan.is-ticket .tp-name { font-size: 40px; font-weight: 700; letter-spacing: -.02em; }
+.tp-plan.is-ticket .tp-place { margin-top: 6px; font-size: 24px; color: var(--on-ticket-2); }
+.tp-stub { position: relative; flex: none; align-self: stretch; width: 236px; border-left: 2px dashed rgba(236, 252, 250, .32); overflow: hidden;
+  /* one entry stamp of the Tile Museum: a single azulejo, 44 px, in the stub's corner */
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cg fill='none' stroke='%23ecfcfa' stroke-opacity='.3' stroke-width='2'%3E%3Crect x='2' y='2' width='40' height='40' rx='4'/%3E%3Cpath d='M22 7 37 22 22 37 7 22Z'/%3E%3Ccircle cx='22' cy='22' r='5'/%3E%3C/g%3E%3C/svg%3E") right 14px top 14px / 44px 44px no-repeat; }
+.tp-stub-face { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding-left: 34px; will-change: transform, opacity; }
+.tp-stub-day { font: 600 26px/1 var(--font); color: var(--on-ticket-2); white-space: nowrap; }
+.tp-stub-time { margin-top: 8px; font: 700 64px/1 var(--font); letter-spacing: -.035em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.tp-plan.is-air { cursor: grabbing; filter: drop-shadow(0 22px 30px rgba(0, 0, 0, .55)); }
+.tp-plan:active:not(.is-air) { filter: brightness(1.08); }
+
+/* where a plan came from, and where it will land */
+.tp-gap { position: absolute; left: 0; top: 0; width: 1116px; border-radius: 20px; border: 2px dashed rgba(178, 188, 191, .3); opacity: 0; will-change: transform, opacity; }
+.tp-gap.is-to { border-color: rgba(127, 216, 207, .7); display: flex; align-items: center; padding-left: 30px; }
+.tp-gap p { font: 600 28px var(--font); color: var(--sea); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.tp.is-reset, .tp.is-reset * { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .tp-day, .tp-day-pill, .tp-done { transition-duration: 1ms; } }
